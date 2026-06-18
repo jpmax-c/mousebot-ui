@@ -39,7 +39,7 @@ export default function App() {
 
   setCheese({
     row: 4,
-    col: 5,
+    col: 4,
   });
 
   setMessage("");
