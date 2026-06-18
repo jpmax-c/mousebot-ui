@@ -193,10 +193,11 @@ h2 {
 
 
 .maze-grid {
-  width: 520px;
+  width: fit-content;
   margin: 20px auto;
 
   display: grid;
+  gap: 4px; /* separación entre celdas */
 
   grid-template-columns:
     repeat(5, 1fr);/* ----------------------cambiar columa */
