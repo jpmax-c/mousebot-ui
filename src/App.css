@@ -190,6 +190,8 @@ h2 {
     transform: translateY(-10px);
   }
 }
+
+
 .maze-grid {
   width: 520px;
   margin: 20px auto;
@@ -197,7 +199,7 @@ h2 {
   display: grid;
 
   grid-template-columns:
-    repeat(8, 1fr);
+    repeat(5, 1fr);/* ----------------------cambiar columa */
 
   gap: 4px;
 }
