@@ -15,7 +15,7 @@ export default function App() {
 
   const [cheese, setCheese] = useState({
     row: 4,
-    col: 5,
+    col: 4,
   });
 
   const [message, setMessage] = useState("");
