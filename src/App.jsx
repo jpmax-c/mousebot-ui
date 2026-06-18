@@ -25,24 +25,39 @@ export default function App() {
   };
 
   const clearRoute = () => {
-    setRoute([]);
-    setMouse({
-      row: 0,
-      col: 0,
-    });
+  setRoute([]);
+  setMessage("");
+  };
 
-    setMessage("");
+  const resetGame = () => {
+  setRoute([]);
+
+  setMouse({
+    row: 0,
+    col: 0,
+  });
+
+  setCheese({
+    row: 4,
+    col: 5,
+  });
+
+  setMessage("");
   };
 
   const checkWin = (newRow, newCol) => {
-    if (
-      newRow === cheese.row &&
-      newCol === cheese.col
-    ) {
-      setMessage(
-        "🎉 ¡Felicidades! El ratoncito encontró el queso 🧀"
-      );
-    }
+
+  if (
+    newRow === cheese.row &&
+    newCol === cheese.col
+  ) {
+    setMessage(
+      "🎉 ¡Felicidades! El ratoncito encontró el queso 🧀"
+    );
+  } else {
+    setMessage("");
+  }
+
   };
 
   const moveMouse = (cmd) => {
@@ -204,9 +219,16 @@ export default function App() {
               className="clear-btn"
               onClick={clearRoute}
             >
-              🗑 Limpiar
-            </button>
-          </div>
+            🗑 Limpiar Ruta
+          </button>
+
+          <button
+            className="reset-btn"
+            onClick={resetGame}
+          >
+            🔄 Reiniciar Juego
+          </button>
+        </div>
         </>
       ) : (
         <>
@@ -251,6 +273,13 @@ export default function App() {
             </button>
 
           </div>
+          
+          <button
+            className="reset-btn"
+            onClick={resetGame}
+          >
+            🔄 Reiniciar Juego
+          </button>
         </>
       )}
     </div>
