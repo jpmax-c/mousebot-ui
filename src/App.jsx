@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 
-const SIZE = 8;
+const SIZE = 5;
 
 export default function App() {
   const [mode, setMode] = useState("program");
