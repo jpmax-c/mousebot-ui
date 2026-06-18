@@ -1,0 +1,129 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(
+    135deg,
+    #59c3ff,
+    #7b68ee
+  );
+  font-family: Arial, sans-serif;
+}
+
+.app {
+  min-height: 100vh;
+  text-align: center;
+  padding: 30px;
+  color: white;
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+h2 {
+  margin-top: 20px;
+  margin-bottom: 15px;
+}
+
+.maze-container {
+  width: 700px;
+  height: 250px;
+  margin: auto;
+  background: white;
+  border-radius: 25px;
+  position: relative;
+  overflow: hidden;
+  border: 8px solid #ffd700;
+}
+
+.maze-container::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+
+  background-image:
+    linear-gradient(to right, #ddd 2px, transparent 2px),
+    linear-gradient(to bottom, #ddd 2px, transparent 2px);
+
+  background-size: 50px 50px;
+}
+
+.mouse {
+  position: absolute;
+  font-size: 60px;
+  left: 40px;
+  top: 90px;
+}
+
+.cheese {
+  position: absolute;
+  font-size: 60px;
+  right: 40px;
+  top: 90px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.buttons button {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #ffd700;
+  transition: 0.3s;
+}
+
+.buttons button:hover {
+  transform: scale(1.1);
+}
+
+.route-box {
+  margin-top: 25px;
+  background: rgba(255,255,255,0.2);
+  padding: 20px;
+  border-radius: 20px;
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.route-box p {
+  font-size: 1.5rem;
+  margin-top: 10px;
+}
+
+.action-buttons {
+  margin-top: 20px;
+}
+
+.start-btn,
+.clear-btn {
+  margin: 10px;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 15px;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.start-btn {
+  background: #00e676;
+}
+
+.clear-btn {
+  background: #ff5252;
+  color: white;
+}
