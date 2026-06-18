@@ -1,20 +1,24 @@
 import { useState } from "react";
 import "./App.css";
 
+const SIZE = 8;
+
 export default function App() {
   const [mode, setMode] = useState("program");
 
   const [route, setRoute] = useState([]);
 
-  const [mousePos, setMousePos] = useState({
-    x: 40,
-    y: 90,
+  const [mouse, setMouse] = useState({
+    row: 0,
+    col: 0,
   });
 
-  const cheesePos = {
-    x: 550,
-    y: 90,
-  };
+  const [cheese, setCheese] = useState({
+    row: 4,
+    col: 5,
+  });
+
+  const [message, setMessage] = useState("");
 
   const addCommand = (cmd) => {
     setRoute((prev) => [...prev, cmd]);
@@ -22,45 +26,78 @@ export default function App() {
 
   const clearRoute = () => {
     setRoute([]);
-    setMousePos({
-      x: 40,
-      y: 90,
+    setMouse({
+      row: 0,
+      col: 0,
     });
+
+    setMessage("");
   };
 
-  const move = (cmd) => {
-    setMousePos((prev) => {
-      let x = prev.x;
-      let y = prev.y;
+  const checkWin = (newRow, newCol) => {
+    if (
+      newRow === cheese.row &&
+      newCol === cheese.col
+    ) {
+      setMessage(
+        "🎉 ¡Felicidades! El ratoncito encontró el queso 🧀"
+      );
+    }
+  };
 
-      const step = 50;
+  const moveMouse = (cmd) => {
+    setMouse((prev) => {
+      let row = prev.row;
+      let col = prev.col;
 
-      if (cmd === "UP") y -= step;
-      if (cmd === "DOWN") y += step;
-      if (cmd === "LEFT") x -= step;
-      if (cmd === "RIGHT") x += step;
+      if (cmd === "UP" && row > 0) row--;
+      if (cmd === "DOWN" && row < SIZE - 1) row++;
+      if (cmd === "LEFT" && col > 0) col--;
+      if (cmd === "RIGHT" && col < SIZE - 1) col++;
 
-      x = Math.max(0, Math.min(600, x));
-      y = Math.max(0, Math.min(180, y));
+      checkWin(row, col);
 
-      return { x, y };
+      return { row, col };
     });
   };
 
   const executeRoute = () => {
+    setMessage("");
+
     route.forEach((cmd, index) => {
       setTimeout(() => {
-        move(cmd);
+        moveMouse(cmd);
       }, index * 500);
     });
   };
 
-  const remoteMove = (cmd) => {
-    move(cmd);
+  const createCell = (row, col) => {
+    const isMouse =
+      mouse.row === row &&
+      mouse.col === col;
+
+    const isCheese =
+      cheese.row === row &&
+      cheese.col === col;
+
+    return (
+      <div
+        key={`${row}-${col}`}
+        className="cell"
+        onClick={() => {
+          setCheese({ row, col });
+          setMessage("");
+        }}
+      >
+        {isMouse && "🐭"}
+        {!isMouse && isCheese && "🧀"}
+      </div>
+    );
   };
 
   return (
     <div className="app">
+
       <h1>🧀 Cheese Chaser</h1>
 
       <h3>Perseguidor de Queso</h3>
@@ -69,34 +106,37 @@ export default function App() {
         📶 ESP32 Desconectado
       </div>
 
-      <div className="maze-container">
-        <div
-          className="mouse"
-          style={{
-            left: `${mousePos.x}px`,
-            top: `${mousePos.y}px`,
-          }}
-        >
-          🐭
-        </div>
-
-        <div
-          className="cheese"
-          style={{
-            left: `${cheesePos.x}px`,
-            top: `${cheesePos.y}px`,
-          }}
-        >
-          🧀
-        </div>
+      <div className="maze-grid">
+        {Array.from({ length: SIZE }).map(
+          (_, row) =>
+            Array.from({
+              length: SIZE,
+            }).map((_, col) =>
+              createCell(row, col)
+            )
+        )}
       </div>
 
+      {message && (
+        <div className="victory">
+          {message}
+        </div>
+      )}
+
       <div className="mode-selector">
-        <button onClick={() => setMode("program")}>
+        <button
+          onClick={() =>
+            setMode("program")
+          }
+        >
           🧩 Programación
         </button>
 
-        <button onClick={() => setMode("remote")}>
+        <button
+          onClick={() =>
+            setMode("remote")
+          }
+        >
           🎮 Remoto
         </button>
       </div>
@@ -106,38 +146,50 @@ export default function App() {
           <h2>🧩 Modo Programación</h2>
 
           <div className="buttons">
-            <button onClick={() => addCommand("UP")}>
+            <button
+              onClick={() =>
+                addCommand("UP")
+              }
+            >
               ⬆️
             </button>
 
-            <button onClick={() => addCommand("LEFT")}>
+            <button
+              onClick={() =>
+                addCommand("LEFT")
+              }
+            >
               ⬅️
             </button>
 
-            <button onClick={() => addCommand("RIGHT")}>
+            <button
+              onClick={() =>
+                addCommand("RIGHT")
+              }
+            >
               ➡️
             </button>
 
-            <button onClick={() => addCommand("DOWN")}>
+            <button
+              onClick={() =>
+                addCommand("DOWN")
+              }
+            >
               ⬇️
             </button>
           </div>
 
           <div className="route-box">
-            <h3>Ruta Programada</h3>
-
-            <p>
-              {route.length === 0
-                ? "Sin movimientos"
-                : route.map((cmd, i) => (
-                    <span key={i}>
-                      {cmd === "UP" && "⬆️ "}
-                      {cmd === "DOWN" && "⬇️ "}
-                      {cmd === "LEFT" && "⬅️ "}
-                      {cmd === "RIGHT" && "➡️ "}
-                    </span>
-                  ))}
-            </p>
+            {route.length === 0
+              ? "Sin movimientos"
+              : route.map((cmd, i) => (
+                  <span key={i}>
+                    {cmd === "UP" && "⬆️ "}
+                    {cmd === "DOWN" && "⬇️ "}
+                    {cmd === "LEFT" && "⬅️ "}
+                    {cmd === "RIGHT" && "➡️ "}
+                  </span>
+                ))}
           </div>
 
           <div className="action-buttons">
@@ -161,18 +213,20 @@ export default function App() {
           <h2>🎮 Control Remoto</h2>
 
           <div className="remote-pad">
+
             <button
               onClick={() =>
-                remoteMove("UP")
+                moveMouse("UP")
               }
             >
               ⬆️
             </button>
 
             <div className="middle-row">
+
               <button
                 onClick={() =>
-                  remoteMove("LEFT")
+                  moveMouse("LEFT")
                 }
               >
                 ⬅️
@@ -180,20 +234,22 @@ export default function App() {
 
               <button
                 onClick={() =>
-                  remoteMove("RIGHT")
+                  moveMouse("RIGHT")
                 }
               >
                 ➡️
               </button>
+
             </div>
 
             <button
               onClick={() =>
-                remoteMove("DOWN")
+                moveMouse("DOWN")
               }
             >
               ⬇️
             </button>
+
           </div>
         </>
       )}

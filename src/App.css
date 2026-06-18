@@ -190,3 +190,57 @@ h2 {
     transform: translateY(-10px);
   }
 }
+.maze-grid {
+  width: 520px;
+  margin: 20px auto;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(8, 1fr);
+
+  gap: 4px;
+}
+
+.cell {
+  width: 60px;
+  height: 60px;
+
+  background: white;
+
+  border-radius: 12px;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  font-size: 2rem;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.cell:hover {
+  background: #fff4b0;
+  transform: scale(1.05);
+}
+
+.victory {
+  margin: 20px auto;
+
+  width: 70%;
+
+  background: #00e676;
+
+  color: white;
+
+  font-size: 1.3rem;
+
+  padding: 15px;
+
+  border-radius: 20px;
+
+  font-weight: bold;
+}
