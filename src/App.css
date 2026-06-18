@@ -127,3 +127,66 @@ h2 {
   background: #ff5252;
   color: white;
 }
+
+.mode-selector {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.mode-selector button {
+  margin: 5px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.wifi-status {
+  margin-bottom: 20px;
+}
+
+.mouse {
+  position: absolute;
+  font-size: 60px;
+  transition: all 0.4s ease;
+  z-index: 2;
+}
+
+.cheese {
+  position: absolute;
+  font-size: 60px;
+  animation: float 1.5s infinite alternate;
+}
+
+.remote-pad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.middle-row {
+  display: flex;
+  gap: 20px;
+}
+
+.remote-pad button {
+  width: 90px;
+  height: 90px;
+  border-radius: 20px;
+  border: none;
+  background: gold;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+@keyframes float {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-10px);
+  }
+}
