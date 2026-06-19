@@ -141,8 +141,8 @@ export default function App() {
         {!isMouse &&
         !isCheese &&
         previewIndex >= 0 && (
-          <span className="preview-number">
-            {previewIndex + 1}
+          <span className="preview-step">
+            🐾
           </span>
         )}
       </div>
