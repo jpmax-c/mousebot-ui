@@ -29,6 +29,10 @@ export default function App() {
   setMessage("");
   };
 
+  const undoCommand = () => {
+  setRoute((prev) => prev.slice(0, -1));
+  };
+
   const resetGame = () => {
   setRoute([]);
 
@@ -59,6 +63,26 @@ export default function App() {
   }
 
   };
+  
+  const getPreviewRoute = () => {
+  let row = mouse.row;
+  let col = mouse.col;
+
+  const preview = [];
+
+  route.forEach((cmd) => {
+    if (cmd === "UP" && row > 0) row--;
+    if (cmd === "DOWN" && row < SIZE - 1) row++;
+    if (cmd === "LEFT" && col > 0) col--;
+    if (cmd === "RIGHT" && col < SIZE - 1) col++;
+
+    preview.push({ row, col });
+  });
+
+  return preview;
+  };
+
+  const previewRoute = getPreviewRoute();
 
   const moveMouse = (cmd) => {
     setMouse((prev) => {
@@ -94,6 +118,12 @@ export default function App() {
     const isCheese =
       cheese.row === row &&
       cheese.col === col;
+    
+    const previewIndex = previewRoute.findIndex(
+      (p) =>
+        p.row === row &&
+        p.col === col
+    );
 
     return (
       <div
@@ -105,7 +135,16 @@ export default function App() {
         }}
       >
         {isMouse && "🐭"}
+
         {!isMouse && isCheese && "🧀"}
+
+        {!isMouse &&
+        !isCheese &&
+        previewIndex >= 0 && (
+          <span className="preview-number">
+            {previewIndex + 1}
+          </span>
+        )}
       </div>
     );
   };
@@ -208,6 +247,12 @@ export default function App() {
           </div>
 
           <div className="action-buttons">
+            <button
+              className="undo-btn"
+              onClick={undoCommand}
+            >
+              ↩️ Deshacer
+            </button>
             <button
               className="start-btn"
               onClick={executeRoute}
