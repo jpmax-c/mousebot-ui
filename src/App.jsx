@@ -8,6 +8,8 @@ export default function App() {
 
   const [route, setRoute] = useState([]);
 
+  const [previewRoute, setPreviewRoute] = useState([]);
+
   const [mouse, setMouse] = useState({
     row: 0,
     col: 0,
@@ -21,20 +23,52 @@ export default function App() {
   const [message, setMessage] = useState("");
 
   const addCommand = (cmd) => {
-    setRoute((prev) => [...prev, cmd]);
+    const newRoute = [...route, cmd];
+
+    setRoute(newRoute);
+
+    setPreviewRoute(
+      buildPreviewRoute(newRoute)
+    );
+  };
+
+  const buildPreviewRoute = (routeToBuild) => {
+    let row = mouse.row;
+    let col = mouse.col;
+
+    const preview = [];
+
+    routeToBuild.forEach((cmd) => {
+      if (cmd === "UP" && row > 0) row--;
+      if (cmd === "DOWN" && row < SIZE - 1) row++;
+      if (cmd === "LEFT" && col > 0) col--;
+      if (cmd === "RIGHT" && col < SIZE - 1) col++;
+
+      preview.push({ row, col });
+    });
+
+    return preview;
   };
 
   const clearRoute = () => {
-  setRoute([]);
-  setMessage("");
+    setRoute([]);
+    setPreviewRoute([]);
+    setMessage("");
   };
 
   const undoCommand = () => {
-  setRoute((prev) => prev.slice(0, -1));
+    const newRoute = route.slice(0, -1);
+
+    setRoute(newRoute);
+
+    setPreviewRoute(
+      buildPreviewRoute(newRoute)
+    );
   };
 
   const resetGame = () => {
   setRoute([]);
+  setPreviewRoute([]);
 
   setMouse({
     row: 0,
@@ -118,6 +152,13 @@ export default function App() {
     const isCheese =
       cheese.row === row &&
       cheese.col === col;
+
+    const previewIndex =
+      previewRoute.findIndex(
+        (p) =>
+          p.row === row &&
+          p.col === col
+      );
     
     const previewIndex = previewRoute.findIndex(
       (p) =>
@@ -139,10 +180,10 @@ export default function App() {
         {!isMouse && isCheese && "🧀"}
 
         {!isMouse &&
-        !isCheese &&
+         !isCheese &&
         previewIndex >= 0 && (
           <span className="preview-step">
-            🐾
+            🐾{previewIndex + 1}
           </span>
         )}
       </div>
@@ -253,6 +294,8 @@ export default function App() {
             >
               ↩️ Deshacer
             </button>
+
+
             <button
               className="start-btn"
               onClick={executeRoute}
