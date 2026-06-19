@@ -98,25 +98,8 @@ export default function App() {
 
   };
   
-  const getPreviewRoute = () => {
-  let row = mouse.row;
-  let col = mouse.col;
-
-  const preview = [];
-
-  route.forEach((cmd) => {
-    if (cmd === "UP" && row > 0) row--;
-    if (cmd === "DOWN" && row < SIZE - 1) row++;
-    if (cmd === "LEFT" && col > 0) col--;
-    if (cmd === "RIGHT" && col < SIZE - 1) col++;
-
-    preview.push({ row, col });
-  });
-
-  return preview;
-  };
-
-  const previewRoute = getPreviewRoute();
+  
+  
 
   const moveMouse = (cmd) => {
     setMouse((prev) => {
@@ -153,12 +136,6 @@ export default function App() {
       cheese.row === row &&
       cheese.col === col;
 
-    const previewIndex =
-      previewRoute.findIndex(
-        (p) =>
-          p.row === row &&
-          p.col === col
-      );
     
     const previewIndex = previewRoute.findIndex(
       (p) =>
