@@ -9,44 +9,41 @@ export default function App() {
   const [previewRoute, setPreviewRoute] = useState([]);
   const [connected, setConnected] = useState(false);
 
-  // Formulario para configurar Wi-Fi desde la interfaz
-  const [ssid, setSsid] = useState("");
-  const [password, setPassword] = useState("");
-  const [esp32Ip, setEsp32Ip] = useState(
-    localStorage.getItem("esp32_ip") || "192.168.4.1" // IP base en modo AP
+  // Guarda la IP o nombre mDNS en localStorage. Por defecto usa 'mousebot.local'
+  const [esp32Host, setEsp32Host] = useState(
+    localStorage.getItem("esp32_host") || "mousebot.local"
   );
 
   const ws = useRef(null);
+
   const [mouse, setMouse] = useState({ row: 0, col: 0 });
   const [cheese, setCheese] = useState({ row: 4, col: 4 });
   const [message, setMessage] = useState("");
 
-  // Manejador de la conexión WebSocket
+  // Manejo de conexión WebSocket
   useEffect(() => {
-    if (!esp32Ip) return;
+    if (!esp32Host) return;
+
+    localStorage.setItem("esp32_host", esp32Host);
 
     const connectWS = () => {
       if (ws.current) ws.current.close();
 
-      ws.current = new WebSocket(`ws://${esp32Ip}:81/`);
+      // Intenta conectar vía mDNS (mousebot.local) o por IP asignada
+      ws.current = new WebSocket(`ws://${esp32Host}:81/`);
 
       ws.current.onopen = () => {
-        console.log("Conectado a la ESP32");
+        console.log("Conectado exitosamente a la ESP32");
         setConnected(true);
       };
 
-      ws.current.onmessage = (event) => {
-        // El ESP32 nos enviará un mensaje con la nueva IP recibida de la red
-        if (event.data.startsWith("NEW_IP:")) {
-          const newIp = event.data.replace("NEW_IP:", "");
-          setEsp32Ip(newIp);
-          localStorage.setItem("esp32_ip", newIp);
-          setMessage(`✅ ¡ESP32 conectado a la red! Nueva IP: ${newIp}`);
-        }
+      ws.current.onclose = () => {
+        setConnected(false);
       };
 
-      ws.current.onclose = () => setConnected(false);
-      ws.current.onerror = () => setConnected(false);
+      ws.current.onerror = () => {
+        setConnected(false);
+      };
     };
 
     connectWS();
@@ -54,22 +51,13 @@ export default function App() {
     return () => {
       ws.current?.close();
     };
-  }, [esp32Ip]);
+  }, [esp32Host]);
 
+  // Función para enviar comandos a la ESP32
   const sendToESP32 = (cmd) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(cmd);
     }
-  };
-
-  // Función para enviar las credenciales Wi-Fi al ESP32
-  const handleWifiConnect = (e) => {
-    e.preventDefault();
-    if (!ssid) return alert("Por favor escribe el nombre de la red Wi-Fi");
-
-    // Enviar comando especial con las credenciales Wi-Fi
-    sendToESP32(`SET_WIFI:${ssid}:${password}`);
-    setMessage("📡 Enviando datos de Wi-Fi al ESP32... Espere por favor.");
   };
 
   const addCommand = (cmd) => {
@@ -184,32 +172,29 @@ export default function App() {
       <h1>🧀 Cheese Chaser</h1>
       <h3>Perseguidor de Queso</h3>
 
-      {/* PANEL DE CONEXIÓN WI-FI */}
-      <div className="wifi-config-panel" style={{ margin: "15px auto", padding: "15px", background: "rgba(255,255,255,0.2)", borderRadius: "15px", maxWidth: "400px" }}>
-        <h4>📶 Configurar Internet del ESP32</h4>
-        <form onSubmit={handleWifiConnect} style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
-          <input
-            type="text"
-            placeholder="Nombre de tu red Wi-Fi (SSID)"
-            value={ssid}
-            onChange={(e) => setSsid(e.target.value)}
-            style={{ padding: "8px", borderRadius: "8px", border: "none", textAlign: "center" }}
-          />
-          <input
-            type="password"
-            placeholder="Contraseña del Wi-Fi"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ padding: "8px", borderRadius: "8px", border: "none", textAlign: "center" }}
-          />
-          <button type="submit" style={{ padding: "8px", borderRadius: "8px", border: "none", background: "#ffd700", fontWeight: "bold", cursor: "pointer" }}>
-            🔗 Conectar ESP32 a Internet
-          </button>
-        </form>
+      {/* Configuración de Host / mDNS de la ESP32 */}
+      <div style={{ marginBottom: "15px" }}>
+        <label style={{ fontSize: "0.9rem", marginRight: "8px" }}>
+          Host / IP ESP32:
+        </label>
+        <input
+          type="text"
+          value={esp32Host}
+          onChange={(e) => setEsp32Host(e.target.value)}
+          placeholder="Ej: mousebot.local o 192.168.1.15"
+          style={{
+            padding: "6px 12px",
+            borderRadius: "8px",
+            border: "none",
+            fontSize: "0.9rem",
+            width: "180px",
+            textAlign: "center",
+          }}
+        />
       </div>
 
       <div className="wifi-status">
-        {connected ? `📶 ESP32 Conectado 🟢 (${esp32Ip})` : "📶 ESP32 Desconectado 🔴"}
+        {connected ? "📶 ESP32 Conectado 🟢" : "📶 ESP32 Desconectado 🔴"}
       </div>
 
       <div className="maze-grid">
@@ -250,10 +235,18 @@ export default function App() {
           </div>
 
           <div className="action-buttons">
-            <button className="undo-btn" onClick={undoCommand}>↩️ Deshacer</button>
-            <button className="start-btn" onClick={executeRoute}>▶ Ejecutar</button>
-            <button className="clear-btn" onClick={clearRoute}>🗑 Limpiar Ruta</button>
-            <button className="reset-btn" onClick={resetGame}>🔄 Reiniciar Juego</button>
+            <button className="undo-btn" onClick={undoCommand}>
+              ↩️ Deshacer
+            </button>
+            <button className="start-btn" onClick={executeRoute}>
+              ▶ Ejecutar
+            </button>
+            <button className="clear-btn" onClick={clearRoute}>
+              🗑 Limpiar Ruta
+            </button>
+            <button className="reset-btn" onClick={resetGame}>
+              🔄 Reiniciar Juego
+            </button>
           </div>
         </>
       ) : (
@@ -269,7 +262,9 @@ export default function App() {
             <button onClick={() => moveMouse("DOWN")}>⬇️</button>
           </div>
 
-          <button className="reset-btn" onClick={resetGame}>🔄 Reiniciar Juego</button>
+          <button className="reset-btn" onClick={resetGame}>
+            🔄 Reiniciar Juego
+          </button>
         </>
       )}
     </div>
