@@ -206,7 +206,7 @@ export default function App() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>¡Victoria! 🏆</h2>
             <p>{message}</p>
-            <button className="close-modal-btn" onClick={() => setMessage("")}>
+            <button className="close-modal-btn" onClick={resetGame}>
               Continuar 🎮
             </button>
           </div>
