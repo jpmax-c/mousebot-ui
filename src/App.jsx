@@ -170,8 +170,28 @@ export default function App() {
 
   return (
     <div className="app">
-      <h1>🧀 Cheese Chaser</h1>
-      <h3>Perseguidor de Queso</h3>
+      <header className="header-title">
+        <h1>🧀 Cheese Chaser</h1>
+        <h3>Perseguidor de Queso</h3>
+      </header>
+
+      {/* Barra compacta de controles principales */}
+      <div className="top-controls">
+        <div className="wifi-status">📶 ESP32 Desconectado</div>
+
+        <div className="edit-tools-dropdown">
+          <label htmlFor="tool-select">Herramienta:</label>
+          <select
+            id="tool-select"
+            value={editTool}
+            onChange={(e) => setEditTool(e.target.value)}
+          >
+            <option value="wall">🧱 Pared</option>
+            <option value="mouse">🐭 Ratón</option>
+            <option value="cheese">🧀 Queso</option>
+          </select>
+        </div>
+      </div>
 
       <div className="main-layout">
         <div className="maze-grid">
@@ -179,37 +199,8 @@ export default function App() {
             Array.from({ length: SIZE }).map((_, col) => createCell(row, col))
           )}
         </div>
-
-        <div className="side-panel">
-          <div className="wifi-status">📶 ESP32 Desconectado</div>
-
-          <div className="edit-tools">
-            <span>Herramienta activa:</span>
-            <div className="tool-buttons">
-              <button
-                className={editTool === "wall" ? "active" : ""}
-                onClick={() => setEditTool("wall")}
-              >
-                🧱 Pared
-              </button>
-              <button
-                className={editTool === "mouse" ? "active" : ""}
-                onClick={() => setEditTool("mouse")}
-              >
-                🐭 Ratón
-              </button>
-              <button
-                className={editTool === "cheese" ? "active" : ""}
-                onClick={() => setEditTool("cheese")}
-              >
-                🧀 Queso
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* --- VENTANA EMERGENTE (MODAL) --- */}
       {message && (
         <div className="modal-overlay" onClick={() => setMessage("")}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -263,7 +254,7 @@ export default function App() {
               ▶ {isExecuting ? "Ejecutando..." : "Ejecutar"}
             </button>
             <button className="clear-btn" onClick={clearRoute} disabled={isExecuting}>
-              🗑 Limpiar Ruta
+              🗑 Limpiar
             </button>
             <button className="reset-btn" onClick={resetGame} disabled={isExecuting}>
               🔄 Reiniciar
