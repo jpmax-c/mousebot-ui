@@ -21,16 +21,16 @@ body {
 
 /* 2. TARJETA DE CRISTAL TRANSLÚCIDO (GLASSMORPHISM) */
 .app {
-  width: 90%;
+  width: 100%;
   max-width: 800px;
   margin: 30px auto;
   padding: 30px;
   text-align: center;
-  color: white;
+  color:#1e293b;
 
   /* Efecto Glassmorphism */
-  background: rgba(255, 255, 255, 0.15); /* Transparencia tenue */
-  backdrop-filter: blur(16px);            /* Difumina la imagen detrás */
+  background: rgba(255, 255, 255, 0.45); /* Transparencia tenue */
+  backdrop-filter: blur(20px);            /* Difumina la imagen detrás */
   -webkit-backdrop-filter: blur(16px);    /* Compatibilidad con Safari */
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.25); /* Borde brillante tipo cristal */
