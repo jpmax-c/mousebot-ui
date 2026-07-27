@@ -4,14 +4,19 @@
   box-sizing: border-box;
 }
 
+/* Forzar centrado en el contenedor principal de React/Vite */
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
 body {
   background: url("./assets/fondo.jpg") no-repeat center center fixed;
   background-size: cover;
   font-family: Arial, sans-serif;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   padding: 10px;
 }
 
@@ -30,6 +35,9 @@ body {
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+  
+  /* Asegura centrado horizontal en la tarjeta */
+  margin: auto !important;
 }
 
 /* Corrección para que el título no se encima */
