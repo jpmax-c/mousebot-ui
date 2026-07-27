@@ -173,7 +173,6 @@ export default function App() {
       <h1>🧀 Cheese Chaser</h1>
       <h3>Perseguidor de Queso</h3>
 
-      {/* Disposición Principal: Tablero a la izquierda, Panel a la derecha */}
       <div className="main-layout">
         <div className="maze-grid">
           {Array.from({ length: SIZE }).map((_, row) =>
@@ -210,7 +209,18 @@ export default function App() {
         </div>
       </div>
 
-      {message && <div className="victory">{message}</div>}
+      {/* --- VENTANA EMERGENTE (MODAL) --- */}
+      {message && (
+        <div className="modal-overlay" onClick={() => setMessage("")}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>¡Victoria! 🏆</h2>
+            <p>{message}</p>
+            <button className="close-modal-btn" onClick={() => setMessage("")}>
+              Continuar 🎮
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="mode-selector">
         <button onClick={() => setMode("program")} disabled={isExecuting}>
