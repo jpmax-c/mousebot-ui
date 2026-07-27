@@ -1,164 +1,176 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import "./App.css";
 
 const SIZE = 5;
 
 export default function App() {
-  const [mode, setMode] = useState("program");
+  const [mode, setMode] = useState("program"); // "program" | "remote"
+  const [editTool, setEditTool] = useState("wall"); // "mouse" | "cheese" | "wall"
+  
   const [route, setRoute] = useState([]);
   const [previewRoute, setPreviewRoute] = useState([]);
-  const [connected, setConnected] = useState(false);
-
-  // Por defecto usa mousebot.local, pero lo guardamos en localStorage por si acaso
-  const [esp32Host, setEsp32Host] = useState(
-    localStorage.getItem("esp32_host") || "mousebot.local"
-  );
-
-  const ws = useRef(null);
+  const [isExecuting, setIsExecuting] = useState(false);
 
   const [mouse, setMouse] = useState({ row: 0, col: 0 });
   const [cheese, setCheese] = useState({ row: 4, col: 4 });
+  const [walls, setWalls] = useState([]); // Guarda las coordenadas de paredes {row, col}
   const [message, setMessage] = useState("");
 
-  // Conexión WebSocket hacia mousebot.local
-  useEffect(() => {
-    if (!esp32Host) return;
+  // Comprueba si una celda es pared
+  const isWall = (r, c) => walls.some((w) => w.row === r && w.col === c);
 
-    localStorage.setItem("esp32_host", esp32Host);
-
-    const connectWS = () => {
-      if (ws.current) ws.current.close();
-
-      ws.current = new WebSocket(`ws://${esp32Host}:81/`);
-
-      ws.current.onopen = () => {
-        console.log("Conectado exitosamente a la ESP32");
-        setConnected(true);
-      };
-
-      ws.current.onclose = () => {
-        setConnected(false);
-      };
-
-      ws.current.onerror = () => {
-        setConnected(false);
-      };
-    };
-
-    connectWS();
-
-    return () => {
-      ws.current?.close();
-    };
-  }, [esp32Host]);
-
-  const sendToESP32 = (cmd) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(cmd);
-    }
+  // Calcula si el movimiento a (r, c) es válido (dentro de límites y sin chocar con pared)
+  const isValidMove = (r, c) => {
+    if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) return false;
+    if (isWall(r, c)) return false; // Bloqueado por pared
+    return true;
   };
 
-  const addCommand = (cmd) => {
-    const newRoute = [...route, cmd];
-    setRoute(newRoute);
-    setPreviewRoute(buildPreviewRoute(newRoute));
-  };
-
-  const buildPreviewRoute = (routeToBuild) => {
-    let row = mouse.row;
-    let col = mouse.col;
+  const buildPreviewRoute = (routeToBuild, currentMouse = mouse) => {
+    let row = currentMouse.row;
+    let col = currentMouse.col;
     const preview = [];
 
     routeToBuild.forEach((cmd) => {
-      if (cmd === "UP" && row > 0) row--;
-      if (cmd === "DOWN" && row < SIZE - 1) row++;
-      if (cmd === "LEFT" && col > 0) col--;
-      if (cmd === "RIGHT" && col < SIZE - 1) col++;
+      let nextRow = row;
+      let nextCol = col;
+
+      if (cmd === "UP") nextRow--;
+      if (cmd === "DOWN") nextRow++;
+      if (cmd === "LEFT") nextCol--;
+      if (cmd === "RIGHT") nextCol++;
+
+      if (isValidMove(nextRow, nextCol)) {
+        row = nextRow;
+        col = nextCol;
+      }
       preview.push({ row, col });
     });
 
     return preview;
   };
 
+  const addCommand = (cmd) => {
+    if (isExecuting) return;
+    const newRoute = [...route, cmd];
+    setRoute(newRoute);
+    setPreviewRoute(buildPreviewRoute(newRoute));
+  };
+
   const clearRoute = () => {
+    if (isExecuting) return;
     setRoute([]);
     setPreviewRoute([]);
     setMessage("");
-    sendToESP32("STOP");
   };
 
   const undoCommand = () => {
+    if (isExecuting) return;
     const newRoute = route.slice(0, -1);
     setRoute(newRoute);
     setPreviewRoute(buildPreviewRoute(newRoute));
   };
 
   const resetGame = () => {
+    if (isExecuting) return;
     setRoute([]);
     setPreviewRoute([]);
     setMouse({ row: 0, col: 0 });
     setCheese({ row: 4, col: 4 });
+    setWalls([]);
     setMessage("");
-    sendToESP32("STOP");
   };
 
-  const checkWin = (newRow, newCol) => {
-    if (newRow === cheese.row && newCol === cheese.col) {
-      setMessage("🎉 ¡Felicidades! El ratoncito encontró el queso 🧀");
-    } else {
-      setMessage("");
+  const moveMouseStep = (cmd, currentMouse) => {
+    let nextRow = currentMouse.row;
+    let nextCol = currentMouse.col;
+
+    if (cmd === "UP") nextRow--;
+    if (cmd === "DOWN") nextRow++;
+    if (cmd === "LEFT") nextCol--;
+    if (cmd === "RIGHT") nextCol++;
+
+    // Solo se mueve si la posición es válida
+    if (isValidMove(nextRow, nextCol)) {
+      if (nextRow === cheese.row && nextCol === cheese.col) {
+        setMessage("🎉 ¡Felicidades! El ratoncito encontró el queso 🧀");
+      } else {
+        setMessage("");
+      }
+      return { row: nextRow, col: nextCol };
+    }
+
+    // Si choca con pared o límite, se queda en el mismo lugar
+    return currentMouse;
+  };
+
+  const executeRoute = async () => {
+    if (isExecuting || route.length === 0) return;
+    setIsExecuting(true);
+    setMessage("");
+
+    let currentPos = { ...mouse };
+
+    for (let i = 0; i < route.length; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      currentPos = moveMouseStep(route[i], currentPos);
+      setMouse(currentPos);
+    }
+
+    setPreviewRoute([]);
+    setIsExecuting(false);
+  };
+
+  // Manejador del clic en una casilla para editar el mapa
+  const handleCellClick = (row, col) => {
+    if (isExecuting) return;
+
+    if (editTool === "mouse") {
+      if (isWall(row, col)) return; // No poner ratón sobre pared
+      if (row === cheese.row && col === cheese.col) return; // No poner sobre queso
+      setMouse({ row, col });
+      setRoute([]);
+      setPreviewRoute([]);
+    } else if (editTool === "cheese") {
+      if (isWall(row, col)) return; // No poner queso sobre pared
+      if (row === mouse.row && col === mouse.col) return; // No poner sobre ratón
+      setCheese({ row, col });
+    } else if (editTool === "wall") {
+      // No poner pared sobre el ratón o el queso
+      if ((row === mouse.row && col === mouse.col) || (row === cheese.row && col === cheese.col)) {
+        return;
+      }
+
+      // Alternar pared (si existe la quita, si no existe la agrega)
+      if (isWall(row, col)) {
+        setWalls(walls.filter((w) => !(w.row === row && w.col === col)));
+      } else {
+        setWalls([...walls, { row, col }]);
+      }
+      setRoute([]);
+      setPreviewRoute([]);
     }
   };
 
-  const moveMouse = (cmd) => {
-    sendToESP32(cmd);
-
-    setMouse((prev) => {
-      let row = prev.row;
-      let col = prev.col;
-
-      if (cmd === "UP" && row > 0) row--;
-      if (cmd === "DOWN" && row < SIZE - 1) row++;
-      if (cmd === "LEFT" && col > 0) col--;
-      if (cmd === "RIGHT" && col < SIZE - 1) col++;
-
-      checkWin(row, col);
-      return { row, col };
-    });
-  };
-
-  const executeRoute = () => {
-    setMessage("");
-
-    route.forEach((cmd, index) => {
-      setTimeout(() => {
-        moveMouse(cmd);
-        if (index === route.length - 1) {
-          setTimeout(() => sendToESP32("STOP"), 500);
-        }
-      }, index * 500);
-    });
-  };
-
   const createCell = (row, col) => {
-    const isMouse = mouse.row === row && mouse.col === col;
-    const isCheese = cheese.row === row && cheese.col === col;
-    const previewIndex = previewRoute.findIndex(
-      (p) => p.row === row && p.col === col
-    );
+    const isMouseHere = mouse.row === row && mouse.col === col;
+    const isCheeseHere = cheese.row === row && cheese.col === col;
+    const isWallHere = isWall(row, col);
+    const previewIndex = previewRoute.findIndex((p) => p.row === row && p.col === col);
+
+    let cellClass = "cell";
+    if (isWallHere) cellClass += " cell-wall";
 
     return (
       <div
         key={`${row}-${col}`}
-        className="cell"
-        onClick={() => {
-          setCheese({ row, col });
-          setMessage("");
-        }}
+        className={cellClass}
+        onClick={() => handleCellClick(row, col)}
       >
-        {isMouse && "🐭"}
-        {!isMouse && isCheese && "🧀"}
-        {!isMouse && !isCheese && previewIndex >= 0 && (
+        {isMouseHere && "🐭"}
+        {!isMouseHere && isCheeseHere && "🧀"}
+        {!isMouseHere && !isCheeseHere && isWallHere && "🧱"}
+        {!isMouseHere && !isCheeseHere && !isWallHere && previewIndex >= 0 && (
           <span className="preview-step">🐾{previewIndex + 1}</span>
         )}
       </div>
@@ -170,29 +182,31 @@ export default function App() {
       <h1>🧀 Cheese Chaser</h1>
       <h3>Perseguidor de Queso</h3>
 
-      {/* Host / IP predeterminado: mousebot.local */}
-      <div style={{ marginBottom: "15px" }}>
-        <label style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-          Host ESP32:
-        </label>
-        <input
-          type="text"
-          value={esp32Host}
-          onChange={(e) => setEsp32Host(e.target.value)}
-          placeholder="Ej: mousebot.local"
-          style={{
-            padding: "6px 12px",
-            borderRadius: "8px",
-            border: "none",
-            fontSize: "0.9rem",
-            width: "160px",
-            textAlign: "center",
-          }}
-        />
-      </div>
+      <div className="wifi-status">📶 ESP32 Desconectado</div>
 
-      <div className="wifi-status">
-        {connected ? "📶 ESP32 Conectado 🟢" : "📶 ESP32 Desconectado 🔴"}
+      {/* Selector de herramientas para interactuar con el mapa */}
+      <div className="edit-tools">
+        <span>Herramienta activa al hacer clic:</span>
+        <div className="tool-buttons">
+          <button
+            className={editTool === "wall" ? "active" : ""}
+            onClick={() => setEditTool("wall")}
+          >
+            🧱 Pared
+          </button>
+          <button
+            className={editTool === "mouse" ? "active" : ""}
+            onClick={() => setEditTool("mouse")}
+          >
+            🐭 Ratón
+          </button>
+          <button
+            className={editTool === "cheese" ? "active" : ""}
+            onClick={() => setEditTool("cheese")}
+          >
+            🧀 Queso
+          </button>
+        </div>
       </div>
 
       <div className="maze-grid">
@@ -204,8 +218,12 @@ export default function App() {
       {message && <div className="victory">{message}</div>}
 
       <div className="mode-selector">
-        <button onClick={() => setMode("program")}>🧩 Programación</button>
-        <button onClick={() => setMode("remote")}>🎮 Remoto</button>
+        <button onClick={() => setMode("program")} disabled={isExecuting}>
+          🧩 Programación
+        </button>
+        <button onClick={() => setMode("remote")} disabled={isExecuting}>
+          🎮 Remoto
+        </button>
       </div>
 
       {mode === "program" ? (
@@ -224,44 +242,42 @@ export default function App() {
               ? "Sin movimientos"
               : route.map((cmd, i) => (
                   <span key={i}>
-                    {cmd === "UP" && "⬆️ "}
-                    {cmd === "DOWN" && "⬇️ "}
-                    {cmd === "LEFT" && "⬅️ "}
-                    {cmd === "RIGHT" && "➡️ "}
+                    {cmd === "UP" && "⬆️"}
+                    {cmd === "DOWN" && "⬇️"}
+                    {cmd === "LEFT" && "⬅️"}
+                    {cmd === "RIGHT" && "➡️"}
                   </span>
                 ))}
           </div>
 
           <div className="action-buttons">
-            <button className="undo-btn" onClick={undoCommand}>
+            <button className="undo-btn" onClick={undoCommand} disabled={isExecuting}>
               ↩️ Deshacer
             </button>
-            <button className="start-btn" onClick={executeRoute}>
-              ▶ Ejecutar
+            <button className="start-btn" onClick={executeRoute} disabled={isExecuting}>
+              ▶ {isExecuting ? "Ejecutando..." : "Ejecutar"}
             </button>
-            <button className="clear-btn" onClick={clearRoute}>
+            <button className="clear-btn" onClick={clearRoute} disabled={isExecuting}>
               🗑 Limpiar Ruta
             </button>
-            <button className="reset-btn" onClick={resetGame}>
-              🔄 Reiniciar Juego
+            <button className="reset-btn" onClick={resetGame} disabled={isExecuting}>
+              🔄 Reiniciar
             </button>
           </div>
         </>
       ) : (
         <>
           <h2>🎮 Control Remoto</h2>
-
           <div className="remote-pad">
-            <button onClick={() => moveMouse("UP")}>⬆️</button>
+            <button onClick={() => setMouse((prev) => moveMouseStep("UP", prev))}>⬆️</button>
             <div className="middle-row">
-              <button onClick={() => moveMouse("LEFT")}>⬅️</button>
-              <button onClick={() => moveMouse("RIGHT")}>➡️</button>
+              <button onClick={() => setMouse((prev) => moveMouseStep("LEFT", prev))}>⬅️</button>
+              <button onClick={() => setMouse((prev) => moveMouseStep("RIGHT", prev))}>➡️</button>
             </div>
-            <button onClick={() => moveMouse("DOWN")}>⬇️</button>
+            <button onClick={() => setMouse((prev) => moveMouseStep("DOWN", prev))}>⬇️</button>
           </div>
-
           <button className="reset-btn" onClick={resetGame}>
-            🔄 Reiniciar Juego
+            🔄 Reiniciar Tablero
           </button>
         </>
       )}
