@@ -9,9 +9,10 @@ body {
   background-size: cover;
   font-family: Arial, sans-serif;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  /* Centrado perfecto en ambos ejes */
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
   padding: 10px;
 }
 
