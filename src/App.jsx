@@ -4,8 +4,8 @@ import "./App.css";
 const SIZE = 5;
 
 export default function App() {
-  const [mode, setMode] = useState("program"); // "program" | "remote"
-  const [editTool, setEditTool] = useState("wall"); // "wall" | "mouse" | "cheese"
+  const [mode, setMode] = useState("program");
+  const [editTool, setEditTool] = useState("wall");
 
   const [route, setRoute] = useState([]);
   const [previewRoute, setPreviewRoute] = useState([]);
@@ -173,37 +173,41 @@ export default function App() {
       <h1>🧀 Cheese Chaser</h1>
       <h3>Perseguidor de Queso</h3>
 
-      <div className="wifi-status">📶 ESP32 Desconectado</div>
-
-      {/* Contenedor de herramientas simplificado en una línea */}
-      <div className="edit-tools">
-        <span>Herramienta activa al hacer clic:</span>
-        <div className="tool-buttons">
-          <button
-            className={editTool === "wall" ? "active" : ""}
-            onClick={() => setEditTool("wall")}
-          >
-            🧱 Pared
-          </button>
-          <button
-            className={editTool === "mouse" ? "active" : ""}
-            onClick={() => setEditTool("mouse")}
-          >
-            🐭 Ratón
-          </button>
-          <button
-            className={editTool === "cheese" ? "active" : ""}
-            onClick={() => setEditTool("cheese")}
-          >
-            🧀 Queso
-          </button>
+      {/* Disposición Principal: Tablero a la izquierda, Panel a la derecha */}
+      <div className="main-layout">
+        <div className="maze-grid">
+          {Array.from({ length: SIZE }).map((_, row) =>
+            Array.from({ length: SIZE }).map((_, col) => createCell(row, col))
+          )}
         </div>
-      </div>
 
-      <div className="maze-grid">
-        {Array.from({ length: SIZE }).map((_, row) =>
-          Array.from({ length: SIZE }).map((_, col) => createCell(row, col))
-        )}
+        <div className="side-panel">
+          <div className="wifi-status">📶 ESP32 Desconectado</div>
+
+          <div className="edit-tools">
+            <span>Herramienta activa:</span>
+            <div className="tool-buttons">
+              <button
+                className={editTool === "wall" ? "active" : ""}
+                onClick={() => setEditTool("wall")}
+              >
+                🧱 Pared
+              </button>
+              <button
+                className={editTool === "mouse" ? "active" : ""}
+                onClick={() => setEditTool("mouse")}
+              >
+                🐭 Ratón
+              </button>
+              <button
+                className={editTool === "cheese" ? "active" : ""}
+                onClick={() => setEditTool("cheese")}
+              >
+                🧀 Queso
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {message && <div className="victory">{message}</div>}
