@@ -41,20 +41,24 @@ h2 {
   font-weight: bold;
 }
 
-/* Herramientas para colocar Paredes / Ratón / Queso */
+/* Herramientas alineadas horizontalmente */
 .edit-tools {
   margin: 15px auto;
   background: rgba(0, 0, 0, 0.2);
-  padding: 10px 15px;
-  border-radius: 15px;
-  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .edit-tools span {
-  display: block;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
+  display: inline-block;
+  font-size: 0.95rem;
+  margin-bottom: 0;
   opacity: 0.9;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .tool-buttons {
