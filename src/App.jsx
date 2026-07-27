@@ -5,24 +5,22 @@ const SIZE = 5;
 
 export default function App() {
   const [mode, setMode] = useState("program"); // "program" | "remote"
-  const [editTool, setEditTool] = useState("wall"); // "mouse" | "cheese" | "wall"
-  
+  const [editTool, setEditTool] = useState("wall"); // "wall" | "mouse" | "cheese"
+
   const [route, setRoute] = useState([]);
   const [previewRoute, setPreviewRoute] = useState([]);
   const [isExecuting, setIsExecuting] = useState(false);
 
   const [mouse, setMouse] = useState({ row: 0, col: 0 });
   const [cheese, setCheese] = useState({ row: 4, col: 4 });
-  const [walls, setWalls] = useState([]); // Guarda las coordenadas de paredes {row, col}
+  const [walls, setWalls] = useState([]);
   const [message, setMessage] = useState("");
 
-  // Comprueba si una celda es pared
   const isWall = (r, c) => walls.some((w) => w.row === r && w.col === c);
 
-  // Calcula si el movimiento a (r, c) es válido (dentro de límites y sin chocar con pared)
   const isValidMove = (r, c) => {
     if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) return false;
-    if (isWall(r, c)) return false; // Bloqueado por pared
+    if (isWall(r, c)) return false;
     return true;
   };
 
@@ -90,7 +88,6 @@ export default function App() {
     if (cmd === "LEFT") nextCol--;
     if (cmd === "RIGHT") nextCol++;
 
-    // Solo se mueve si la posición es válida
     if (isValidMove(nextRow, nextCol)) {
       if (nextRow === cheese.row && nextCol === cheese.col) {
         setMessage("🎉 ¡Felicidades! El ratoncito encontró el queso 🧀");
@@ -100,7 +97,6 @@ export default function App() {
       return { row: nextRow, col: nextCol };
     }
 
-    // Si choca con pared o límite, se queda en el mismo lugar
     return currentMouse;
   };
 
@@ -121,27 +117,22 @@ export default function App() {
     setIsExecuting(false);
   };
 
-  // Manejador del clic en una casilla para editar el mapa
   const handleCellClick = (row, col) => {
     if (isExecuting) return;
 
     if (editTool === "mouse") {
-      if (isWall(row, col)) return; // No poner ratón sobre pared
-      if (row === cheese.row && col === cheese.col) return; // No poner sobre queso
+      if (isWall(row, col) || (row === cheese.row && col === cheese.col)) return;
       setMouse({ row, col });
       setRoute([]);
       setPreviewRoute([]);
     } else if (editTool === "cheese") {
-      if (isWall(row, col)) return; // No poner queso sobre pared
-      if (row === mouse.row && col === mouse.col) return; // No poner sobre ratón
+      if (isWall(row, col) || (row === mouse.row && col === mouse.col)) return;
       setCheese({ row, col });
     } else if (editTool === "wall") {
-      // No poner pared sobre el ratón o el queso
       if ((row === mouse.row && col === mouse.col) || (row === cheese.row && col === cheese.col)) {
         return;
       }
 
-      // Alternar pared (si existe la quita, si no existe la agrega)
       if (isWall(row, col)) {
         setWalls(walls.filter((w) => !(w.row === row && w.col === col)));
       } else {
@@ -184,7 +175,7 @@ export default function App() {
 
       <div className="wifi-status">📶 ESP32 Desconectado</div>
 
-      {/* Selector de herramientas para interactuar con el mapa */}
+      {/* Contenedor de herramientas simplificado en una línea */}
       <div className="edit-tools">
         <span>Herramienta activa al hacer clic:</span>
         <div className="tool-buttons">
