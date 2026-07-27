@@ -8,23 +8,22 @@ export default function App() {
   const [route, setRoute] = useState([]);
   const [previewRoute, setPreviewRoute] = useState([]);
   const [connected, setConnected] = useState(false);
-  
-  // Guarda la IP en la memoria del navegador para no reescribirla siempre
+
+  // Formulario para configurar Wi-Fi desde la interfaz
+  const [ssid, setSsid] = useState("");
+  const [password, setPassword] = useState("");
   const [esp32Ip, setEsp32Ip] = useState(
-    localStorage.getItem("esp32_ip") || "192.168.1.100"
+    localStorage.getItem("esp32_ip") || "192.168.4.1" // IP base en modo AP
   );
 
   const ws = useRef(null);
-
   const [mouse, setMouse] = useState({ row: 0, col: 0 });
   const [cheese, setCheese] = useState({ row: 4, col: 4 });
   const [message, setMessage] = useState("");
 
-  // Intenta conectar al WebSocket cada vez que cambias la IP
+  // Manejador de la conexión WebSocket
   useEffect(() => {
     if (!esp32Ip) return;
-
-    localStorage.setItem("esp32_ip", esp32Ip);
 
     const connectWS = () => {
       if (ws.current) ws.current.close();
@@ -36,13 +35,18 @@ export default function App() {
         setConnected(true);
       };
 
-      ws.current.onclose = () => {
-        setConnected(false);
+      ws.current.onmessage = (event) => {
+        // El ESP32 nos enviará un mensaje con la nueva IP recibida de la red
+        if (event.data.startsWith("NEW_IP:")) {
+          const newIp = event.data.replace("NEW_IP:", "");
+          setEsp32Ip(newIp);
+          localStorage.setItem("esp32_ip", newIp);
+          setMessage(`✅ ¡ESP32 conectado a la red! Nueva IP: ${newIp}`);
+        }
       };
 
-      ws.current.onerror = () => {
-        setConnected(false);
-      };
+      ws.current.onclose = () => setConnected(false);
+      ws.current.onerror = () => setConnected(false);
     };
 
     connectWS();
@@ -56,6 +60,16 @@ export default function App() {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(cmd);
     }
+  };
+
+  // Función para enviar las credenciales Wi-Fi al ESP32
+  const handleWifiConnect = (e) => {
+    e.preventDefault();
+    if (!ssid) return alert("Por favor escribe el nombre de la red Wi-Fi");
+
+    // Enviar comando especial con las credenciales Wi-Fi
+    sendToESP32(`SET_WIFI:${ssid}:${password}`);
+    setMessage("📡 Enviando datos de Wi-Fi al ESP32... Espere por favor.");
   };
 
   const addCommand = (cmd) => {
@@ -170,27 +184,32 @@ export default function App() {
       <h1>🧀 Cheese Chaser</h1>
       <h3>Perseguidor de Queso</h3>
 
-      {/* Selector / Guardador de IP del ESP32 */}
-      <div style={{ marginBottom: "15px" }}>
-        <label style={{ fontSize: "0.9rem", marginRight: "8px" }}>IP ESP32:</label>
-        <input
-          type="text"
-          value={esp32Ip}
-          onChange={(e) => setEsp32Ip(e.target.value)}
-          placeholder="Ej: 192.168.1.15"
-          style={{
-            padding: "6px 12px",
-            borderRadius: "8px",
-            border: "none",
-            fontSize: "0.9rem",
-            width: "150px",
-            textAlign: "center"
-          }}
-        />
+      {/* PANEL DE CONEXIÓN WI-FI */}
+      <div className="wifi-config-panel" style={{ margin: "15px auto", padding: "15px", background: "rgba(255,255,255,0.2)", borderRadius: "15px", maxWidth: "400px" }}>
+        <h4>📶 Configurar Internet del ESP32</h4>
+        <form onSubmit={handleWifiConnect} style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
+          <input
+            type="text"
+            placeholder="Nombre de tu red Wi-Fi (SSID)"
+            value={ssid}
+            onChange={(e) => setSsid(e.target.value)}
+            style={{ padding: "8px", borderRadius: "8px", border: "none", textAlign: "center" }}
+          />
+          <input
+            type="password"
+            placeholder="Contraseña del Wi-Fi"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ padding: "8px", borderRadius: "8px", border: "none", textAlign: "center" }}
+          />
+          <button type="submit" style={{ padding: "8px", borderRadius: "8px", border: "none", background: "#ffd700", fontWeight: "bold", cursor: "pointer" }}>
+            🔗 Conectar ESP32 a Internet
+          </button>
+        </form>
       </div>
 
       <div className="wifi-status">
-        {connected ? "📶 ESP32 Conectado 🟢" : "📶 ESP32 Desconectado 🔴"}
+        {connected ? `📶 ESP32 Conectado 🟢 (${esp32Ip})` : "📶 ESP32 Desconectado 🔴"}
       </div>
 
       <div className="maze-grid">
