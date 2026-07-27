@@ -12,13 +12,15 @@ body {
 .app {
   min-height: 100vh;
   text-align: center;
-  padding: 30px;
+  padding: 20px;
   color: white;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 h1 {
-  font-size: 3rem;
-  margin-bottom: 5px;
+  font-size: 2.8rem;
+  margin-bottom: 2px;
 }
 
 h3 {
@@ -28,71 +30,27 @@ h3 {
 }
 
 h2 {
-  margin-top: 20px;
+  margin-top: 15px;
   margin-bottom: 15px;
 }
 
-.wifi-status {
-  margin-bottom: 20px;
-  background: rgba(0, 0, 0, 0.2);
-  display: inline-block;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-/* Herramientas alineadas horizontalmente */
-.edit-tools {
-  margin: 15px auto;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 10px 18px;
-  border-radius: 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.edit-tools span {
-  display: inline-block;
-  font-size: 0.95rem;
-  margin-bottom: 0;
-  opacity: 0.9;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.tool-buttons {
+/* --- CONTENEDOR PRINCIPAL: MATRIZ Y PANEL DERECHO --- */
+.main-layout {
   display: flex;
-  gap: 10px;
   justify-content: center;
-}
-
-.tool-buttons button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  background: white;
-  font-size: 1rem;
-  font-weight: bold;
-  transition: all 0.2s ease;
-}
-
-.tool-buttons button.active {
-  background: #ffd700;
-  transform: scale(1.08);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 20px;
+  flex-wrap: wrap; /* Para pantallas pequeñas */
 }
 
 .maze-grid {
-  width: fit-content;
-  margin: 20px auto;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
   background: rgba(255, 255, 255, 0.2);
-  padding: 10px;
-  border-radius: 16px;
+  padding: 12px;
+  border-radius: 18px;
 }
 
 .cell {
@@ -123,15 +81,75 @@ h2 {
   background: #6d4c41;
 }
 
+/* --- PANEL LATERAL DERECHO --- */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: stretch;
+  min-width: 220px;
+}
+
+.wifi-status {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 16px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.edit-tools {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-tools span {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-weight: bold;
+}
+
+.tool-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tool-buttons button {
+  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: white;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tool-buttons button.active {
+  background: #ffd700;
+  transform: scale(1.03);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+/* --- RESTO DE LA INTERFAZ --- */
 .victory {
-  margin: 20px auto;
-  width: 70%;
+  margin: 15px auto;
+  width: 100%;
   max-width: 400px;
   background: #00e676;
   color: white;
   font-size: 1.2rem;
-  padding: 15px;
-  border-radius: 20px;
+  padding: 12px;
+  border-radius: 18px;
   font-weight: bold;
   animation: pop 0.3s ease;
 }
@@ -170,8 +188,8 @@ h2 {
 
 .buttons button,
 .remote-pad button {
-  width: 70px;
-  height: 70px;
+  width: 65px;
+  height: 65px;
   font-size: 1.8rem;
   border: none;
   border-radius: 15px;
@@ -187,13 +205,13 @@ h2 {
 }
 
 .route-box {
-  margin: 20px auto;
+  margin: 15px auto;
   background: rgba(255, 255, 255, 0.25);
-  padding: 15px;
+  padding: 12px;
   border-radius: 15px;
-  width: 90%;
+  width: 100%;
   max-width: 500px;
-  min-height: 60px;
+  min-height: 55px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,11 +228,11 @@ h2 {
 .clear-btn,
 .reset-btn,
 .undo-btn {
-  margin: 5px;
-  padding: 12px 20px;
+  margin: 4px;
+  padding: 10px 18px;
   border: none;
   border-radius: 12px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: bold;
   cursor: pointer;
   color: white;
@@ -239,7 +257,7 @@ h2 {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 15px;
 }
 
 .middle-row {
