@@ -9,7 +9,7 @@ export default function App() {
   const [previewRoute, setPreviewRoute] = useState([]);
   const [connected, setConnected] = useState(false);
 
-  // Guarda la IP o nombre mDNS en localStorage. Por defecto usa 'mousebot.local'
+  // Por defecto usa mousebot.local, pero lo guardamos en localStorage por si acaso
   const [esp32Host, setEsp32Host] = useState(
     localStorage.getItem("esp32_host") || "mousebot.local"
   );
@@ -20,7 +20,7 @@ export default function App() {
   const [cheese, setCheese] = useState({ row: 4, col: 4 });
   const [message, setMessage] = useState("");
 
-  // Manejo de conexión WebSocket
+  // Conexión WebSocket hacia mousebot.local
   useEffect(() => {
     if (!esp32Host) return;
 
@@ -29,7 +29,6 @@ export default function App() {
     const connectWS = () => {
       if (ws.current) ws.current.close();
 
-      // Intenta conectar vía mDNS (mousebot.local) o por IP asignada
       ws.current = new WebSocket(`ws://${esp32Host}:81/`);
 
       ws.current.onopen = () => {
@@ -53,7 +52,6 @@ export default function App() {
     };
   }, [esp32Host]);
 
-  // Función para enviar comandos a la ESP32
   const sendToESP32 = (cmd) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(cmd);
@@ -172,22 +170,22 @@ export default function App() {
       <h1>🧀 Cheese Chaser</h1>
       <h3>Perseguidor de Queso</h3>
 
-      {/* Configuración de Host / mDNS de la ESP32 */}
+      {/* Host / IP predeterminado: mousebot.local */}
       <div style={{ marginBottom: "15px" }}>
         <label style={{ fontSize: "0.9rem", marginRight: "8px" }}>
-          Host / IP ESP32:
+          Host ESP32:
         </label>
         <input
           type="text"
           value={esp32Host}
           onChange={(e) => setEsp32Host(e.target.value)}
-          placeholder="Ej: mousebot.local o 192.168.1.15"
+          placeholder="Ej: mousebot.local"
           style={{
             padding: "6px 12px",
             borderRadius: "8px",
             border: "none",
             fontSize: "0.9rem",
-            width: "180px",
+            width: "160px",
             textAlign: "center",
           }}
         />
