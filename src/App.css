@@ -19,8 +19,8 @@ body {
 /* 2. TARJETA PRINCIPAL GLASSMORPHISM */
 .app {
   width: 100%;
-  max-width: 480px; /* Ancho por defecto para celulares */
-  padding: 24px 20px;
+  max-width: 520px; /* Ancho por defecto para celulares */
+  padding: 20px 15px;
   text-align: center;
   color: #1e293b;
 
