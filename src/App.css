@@ -4,9 +4,7 @@
   box-sizing: border-box;
 }
 
-/* 1. CONFIGURACIÓN DE LA IMAGEN DE FONDO */
 body {
-  /* Si la imagen está en src/assets/fondo.jpg */
   background: url("./assets/fondo.jpg") no-repeat center center fixed;
   background-size: cover;
   font-family: Arial, sans-serif;
@@ -14,76 +12,132 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 10px;
 }
 
-/* Si prefieres usar una imagen desde internet rápidamente para probar, reemplaza la línea background por: */
-/* background: url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1920') no-repeat center center fixed; */
-
-/* 2. TARJETA DE CRISTAL TRANSLÚCIDO (GLASSMORPHISM) */
+/* Tarjeta Principal Glassmorphism */
 .app {
   width: 100%;
-  max-width: 800px;
-  margin: 30px auto;
-  padding: 30px;
+  max-width: 520px; /* Ancho optimizado */
+  padding: 20px 15px;
   text-align: center;
-  color:#1e293b;
+  color: #1e293b;
 
-  /* Efecto Glassmorphism */
-  background: rgba(255, 255, 255, 0.45); /* Transparencia tenue */
-  backdrop-filter: blur(20px);            /* Difumina la imagen detrás */
-  -webkit-backdrop-filter: blur(16px);    /* Compatibilidad con Safari */
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.25); /* Borde brillante tipo cristal */
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);   /* Sombra profunda */
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
 }
 
-/* Sombra leve para los textos para garantizar legibilidad */
-h1, h2, h3 {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-h1 {
-  font-size: 2.8rem;
+/* Corrección para que el título no se encima */
+.header-title h1 {
+  font-size: 2.2rem;
+  line-height: 1.1;
   margin-bottom: 4px;
+  color: #0f172a;
 }
 
-h3 {
-  font-size: 1.1rem;
+.header-title h3 {
+  font-size: 1rem;
+  line-height: 1;
   margin-top: 0;
-  margin-bottom: 25px;
-  font-weight: normal;
-  opacity: 0.95;
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #334155;
 }
 
-/* --- ESTRUCTURA PRINCIPAL --- */
+h2 {
+  font-size: 1.15rem;
+  color: #1e293b;
+  margin-top: 15px;
+  margin-bottom: 10px;
+}
+
+/* Barra superior horizontal y compacta */
+.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.wifi-status {
+  background: rgba(255, 255, 255, 0.65);
+  color: #334155;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Estilo para el Desplegable de Herramientas */
+.edit-tools-dropdown {
+  background: rgba(255, 255, 255, 0.65);
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.edit-tools-dropdown label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #334155;
+}
+
+.edit-tools-dropdown select {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #0f172a;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Matriz Adaptable */
 .main-layout {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 25px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+  margin-bottom: 15px;
 }
 
 .maze-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  padding: 10px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  width: 100%;
+  max-width: 360px; /* Evita que crezca demasiado en pantallas grandes */
 }
 
 .cell {
-  width: 58px;
-  height: 58px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
+  aspect-ratio: 1 / 1; /* Cuadrados perfectos siempre */
+  width: 100%;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 2rem;
+  font-size: clamp(1.4rem, 5vw, 1.8rem); /* Iconos escalables según el celular */
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
@@ -91,149 +145,85 @@ h3 {
 
 .cell:hover {
   background: #ffffff;
-  transform: scale(1.04);
+  transform: scale(1.03);
 }
 
 .cell.cell-wall {
   background: #795548;
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.4);
 }
 
-/* --- PANEL LATERAL --- */
-.side-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  min-width: 210px;
-}
-
-.wifi-status {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 10px 16px;
-  border-radius: 15px;
-  font-weight: bold;
-  font-size: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.edit-tools {
-  background: rgba(0, 0, 0, 0.25);
-  padding: 15px;
-  border-radius: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.edit-tools span {
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
-.tool-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.tool-buttons button {
-  padding: 10px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  background: rgba(255, 255, 255, 0.85);
-  font-size: 0.95rem;
-  font-weight: bold;
-  transition: all 0.2s ease;
-}
-
-.tool-buttons button.active {
-  background: #ffd700;
-  color: #222;
-  transform: scale(1.03);
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
-}
-
-/* --- CONTROLES Y RUTA --- */
+/* Modos y Botones de Control */
 .mode-selector {
-  margin: 15px 0;
+  margin: 10px 0;
 }
 
 .mode-selector button {
-  margin: 0 5px;
-  padding: 8px 18px;
+  margin: 0 4px;
+  padding: 8px 14px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.85rem;
+  background: rgba(255, 255, 255, 0.7);
+  color: #1e293b;
   transition: 0.2s;
-}
-
-.mode-selector button:hover {
-  background: rgba(255, 255, 255, 0.4);
 }
 
 .buttons {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-top: 15px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .buttons button,
 .remote-pad button {
-  width: 60px;
-  height: 60px;
-  font-size: 1.6rem;
+  width: 50px;
+  height: 50px;
+  font-size: 1.4rem;
   border: none;
-  border-radius: 14px;
+  border-radius: 12px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.85);
+  background: #ffd700;
   transition: 0.2s;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.buttons button:hover,
-.remote-pad button:hover {
-  transform: scale(1.08);
-  background: white;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .route-box {
-  margin: 15px auto;
-  background: rgba(0, 0, 0, 0.25);
-  padding: 12px;
-  border-radius: 15px;
+  margin: 10px auto;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 8px;
+  border-radius: 12px;
   width: 100%;
-  max-width: 480px;
-  min-height: 52px;
+  min-height: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
-  font-size: 1.4rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 6px;
+  font-size: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: #0f172a;
 }
 
 .action-buttons {
-  margin-top: 15px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .start-btn,
 .clear-btn,
 .reset-btn,
 .undo-btn {
-  margin: 4px;
-  padding: 10px 18px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 12px;
-  font-size: 0.9rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
   font-weight: bold;
   cursor: pointer;
   color: white;
@@ -245,67 +235,51 @@ h3 {
 .reset-btn { background: #2196f3; }
 .undo-btn { background: #ff9800; }
 
-.start-btn:hover,
-.clear-btn:hover,
-.reset-btn:hover,
-.undo-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
-
 .remote-pad {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .middle-row {
   display: flex;
-  gap: 15px;
+  gap: 12px;
 }
 
-/* MODAL */
+/* Modal Emergente */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background: #ffffff;
   color: #222222;
-  padding: 30px;
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  padding: 25px;
+  border-radius: 20px;
   text-align: center;
-  max-width: 380px;
+  max-width: 320px;
   width: 85%;
-}
-
-.modal-content h2 {
-  color: #2e7d32;
-  margin-top: 0;
-  margin-bottom: 12px;
-  text-shadow: none;
 }
 
 .close-modal-btn {
   background: #00e676;
   color: white;
   border: none;
-  padding: 12px 26px;
-  border-radius: 14px;
-  font-size: 1rem;
+  padding: 10px 20px;
+  border-radius: 12px;
   font-weight: bold;
   cursor: pointer;
+  margin-top: 10px;
 }
