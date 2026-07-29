@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 const SIZE = 5;
+const ROBOT_HOST = "http://mousebot.local"; // mDNS del ESP32
 
 export default function App() {
   const [mode, setMode] = useState("program");
@@ -10,11 +11,38 @@ export default function App() {
   const [route, setRoute] = useState([]);
   const [previewRoute, setPreviewRoute] = useState([]);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   const [mouse, setMouse] = useState({ row: 0, col: 0 });
   const [cheese, setCheese] = useState({ row: 4, col: 4 });
   const [walls, setWalls] = useState([]);
   const [message, setMessage] = useState("");
+
+  // Chequeo de conexión constante con la ESP32 vía mDNS
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const res = await fetch(`${ROBOT_HOST}/ping`, { method: "GET" });
+        if (res.ok) setIsConnected(true);
+        else setIsConnected(false);
+      } catch {
+        setIsConnected(false);
+      }
+    };
+
+    checkConnection();
+    const interval = setInterval(checkConnection, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Función para enviar órdenes directas por Wi-Fi
+  const sendToESP32 = async (cmd) => {
+    try {
+      await fetch(`${ROBOT_HOST}/cmd?type=${cmd}`, { method: "GET" });
+    } catch (err) {
+      console.warn("No se pudo comunicar con el robot ESP32:", err);
+    }
+  };
 
   const isWall = (r, c) => walls.some((w) => w.row === r && w.col === c);
 
@@ -77,6 +105,7 @@ export default function App() {
     setCheese({ row: 4, col: 4 });
     setWalls([]);
     setMessage("");
+    sendToESP32("RESET");
   };
 
   const moveMouseStep = (cmd, currentMouse) => {
@@ -100,6 +129,7 @@ export default function App() {
     return currentMouse;
   };
 
+  // MODO PROGRAMACIÓN: Ejecución Paso a Paso Sincronizada con el Robot Físico
   const executeRoute = async () => {
     if (isExecuting || route.length === 0) return;
     setIsExecuting(true);
@@ -108,13 +138,24 @@ export default function App() {
     let currentPos = { ...mouse };
 
     for (let i = 0; i < route.length; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      currentPos = moveMouseStep(route[i], currentPos);
+      const cmd = route[i];
+      
+      // Enviar orden en tiempo real a los motores del ESP32
+      sendToESP32(cmd);
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      currentPos = moveMouseStep(cmd, currentPos);
       setMouse(currentPos);
     }
 
     setPreviewRoute([]);
     setIsExecuting(false);
+  };
+
+  // MODO REMOTO: Movimiento Directo al Presionar los Botones
+  const handleRemoteMove = (cmd) => {
+    setMouse((prev) => moveMouseStep(cmd, prev));
+    sendToESP32(cmd); // Envío directo a la ESP32
   };
 
   const handleCellClick = (row, col) => {
@@ -175,9 +216,11 @@ export default function App() {
         <h3>Perseguidor de Queso</h3>
       </header>
 
-      {/* Barra compacta de controles principales */}
+      {/* Control de estado Wi-Fi mDNS */}
       <div className="top-controls">
-        <div className="wifi-status">📶 ESP32 Desconectado</div>
+        <div className={`wifi-status ${isConnected ? "online" : "offline"}`}>
+          {isConnected ? "🟢 mousebot.local Conectado" : "🔴 ESP32 Buscando..."}
+        </div>
 
         <div className="edit-tools-dropdown">
           <label htmlFor="tool-select">Herramienta:</label>
@@ -213,6 +256,7 @@ export default function App() {
         </div>
       )}
 
+      {/* Cambio entre Modo Programación y Modo Remoto */}
       <div className="mode-selector">
         <button onClick={() => setMode("program")} disabled={isExecuting}>
           🧩 Programación
@@ -265,12 +309,12 @@ export default function App() {
         <>
           <h2>🎮 Control Remoto</h2>
           <div className="remote-pad">
-            <button onClick={() => setMouse((prev) => moveMouseStep("UP", prev))}>⬆️</button>
+            <button onClick={() => handleRemoteMove("UP")}>⬆️</button>
             <div className="middle-row">
-              <button onClick={() => setMouse((prev) => moveMouseStep("LEFT", prev))}>⬅️</button>
-              <button onClick={() => setMouse((prev) => moveMouseStep("RIGHT", prev))}>➡️</button>
+              <button onClick={() => handleRemoteMove("LEFT")}>⬅️</button>
+              <button onClick={() => handleRemoteMove("RIGHT")}>➡️</button>
             </div>
-            <button onClick={() => setMouse((prev) => moveMouseStep("DOWN", prev))}>⬇️</button>
+            <button onClick={() => handleRemoteMove("DOWN")}>⬇️</button>
           </div>
           <button className="reset-btn" onClick={resetGame}>
             🔄 Reiniciar Tablero
