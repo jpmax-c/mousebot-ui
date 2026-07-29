@@ -1,49 +1,77 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 const SIZE = 5;
-const ROBOT_HOST = "http://mousebot.local"; // mDNS del ESP32
 
 export default function App() {
   const [mode, setMode] = useState("program");
   const [editTool, setEditTool] = useState("wall");
 
+  // Dirección IP o mDNS por defecto del ESP32
+  const [robotIp, setRobotIp] = useState("192.168.100.94");
+  const [isConnected, setIsConnected] = useState(false);
+  const socketRef = useRef(null);
+
   const [route, setRoute] = useState([]);
   const [previewRoute, setPreviewRoute] = useState([]);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
 
   const [mouse, setMouse] = useState({ row: 0, col: 0 });
   const [cheese, setCheese] = useState({ row: 4, col: 4 });
   const [walls, setWalls] = useState([]);
   const [message, setMessage] = useState("");
 
-  // Chequeo de conexión constante con la ESP32 vía mDNS
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const res = await fetch(`${ROBOT_HOST}/ping`, { method: "GET" });
-        if (res.ok) setIsConnected(true);
-        else setIsConnected(false);
-      } catch {
-        setIsConnected(false);
-      }
+  // ---------------- CONEXIÓN WEBSOCKET ----------------
+  const connectWebSocket = (targetIp) => {
+    if (socketRef.current) {
+      socketRef.current.close();
+    }
+
+    // Formatear dirección limpia sin http:// ni slashes
+    const cleanIp = targetIp.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    const wsUrl = `ws://${cleanIp}:81`;
+
+    console.log("Intentando conectar a:", wsUrl);
+    const socket = new WebSocket(wsUrl);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      console.log("¡Conectado exitosamente por WebSocket!");
+      setIsConnected(true);
     };
 
-    checkConnection();
-    const interval = setInterval(checkConnection, 4000);
-    return () => clearInterval(interval);
+    socket.onclose = () => {
+      console.log("WebSocket desconectado");
+      setIsConnected(false);
+    };
+
+    socket.onerror = (err) => {
+      console.error("Error en WebSocket:", err);
+      setIsConnected(false);
+    };
+  };
+
+  useEffect(() => {
+    connectWebSocket(robotIp);
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+    };
   }, []);
 
-  // Función para enviar órdenes directas por Wi-Fi
-  const sendToESP32 = async (cmd) => {
-    try {
-      await fetch(`${ROBOT_HOST}/cmd?type=${cmd}`, { method: "GET" });
-    } catch (err) {
-      console.warn("No se pudo comunicar con el robot ESP32:", err);
+  // Función para enviar órdenes en tiempo real por WebSocket
+  const sendToESP32 = (cmd) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.send(cmd);
+      console.log("Enviado a ESP32:", cmd);
+    } else {
+      console.warn("WebSocket no está listo para enviar:", cmd);
     }
   };
 
+  // ---------------- LÓGICA DEL TABLERO Y JUEGO ----------------
   const isWall = (r, c) => walls.some((w) => w.row === r && w.col === c);
 
   const isValidMove = (r, c) => {
@@ -129,7 +157,7 @@ export default function App() {
     return currentMouse;
   };
 
-  // MODO PROGRAMACIÓN: Ejecución Paso a Paso Sincronizada con el Robot Físico
+  // MODO PROGRAMACIÓN: Sincronización Paso a Paso con los motores
   const executeRoute = async () => {
     if (isExecuting || route.length === 0) return;
     setIsExecuting(true);
@@ -139,8 +167,8 @@ export default function App() {
 
     for (let i = 0; i < route.length; i++) {
       const cmd = route[i];
-      
-      // Enviar orden en tiempo real a los motores del ESP32
+
+      // Envío de la orden al robot
       sendToESP32(cmd);
 
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -152,10 +180,10 @@ export default function App() {
     setIsExecuting(false);
   };
 
-  // MODO REMOTO: Movimiento Directo al Presionar los Botones
+  // MODO REMOTO: Movimiento Instantáneo
   const handleRemoteMove = (cmd) => {
     setMouse((prev) => moveMouseStep(cmd, prev));
-    sendToESP32(cmd); // Envío directo a la ESP32
+    sendToESP32(cmd);
   };
 
   const handleCellClick = (row, col) => {
@@ -216,14 +244,44 @@ export default function App() {
         <h3>Perseguidor de Queso</h3>
       </header>
 
-      {/* Control de estado Wi-Fi mDNS */}
-      <div className="top-controls">
+      {/* --- BARRA SUPERIOR CON ESTADO Y CONTROL DE IP --- */}
+      <div className="top-controls" style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", marginBottom: "15px" }}>
         <div className={`wifi-status ${isConnected ? "online" : "offline"}`}>
-          {isConnected ? "🟢 mousebot.local Conectado" : "🔴 ESP32 Buscando..."}
+          {isConnected ? "🟢 WebSocket Listo" : "🔴 ESP32 Buscando..."}
         </div>
 
+        <input
+          type="text"
+          value={robotIp}
+          onChange={(e) => setRobotIp(e.target.value)}
+          placeholder="IP o mousebot.local"
+          style={{
+            padding: "5px 8px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            fontSize: "0.85rem",
+            width: "150px",
+            textAlign: "center"
+          }}
+        />
+
+        <button
+          onClick={() => connectWebSocket(robotIp)}
+          style={{
+            padding: "5px 10px",
+            borderRadius: "8px",
+            border: "none",
+            backgroundColor: "#4A90E2",
+            color: "#fff",
+            cursor: "pointer",
+            fontSize: "0.85rem"
+          }}
+        >
+          Reconectar
+        </button>
+
         <div className="edit-tools-dropdown">
-          <label htmlFor="tool-select">Herramienta:</label>
+          <label htmlFor="tool-select">Herramienta: </label>
           <select
             id="tool-select"
             value={editTool}
@@ -236,6 +294,7 @@ export default function App() {
         </div>
       </div>
 
+      {/* --- TABLERO --- */}
       <div className="main-layout">
         <div className="maze-grid">
           {Array.from({ length: SIZE }).map((_, row) =>
@@ -244,6 +303,7 @@ export default function App() {
         </div>
       </div>
 
+      {/* --- MODAL DE VICTORIA --- */}
       {message && (
         <div className="modal-overlay" onClick={() => setMessage("")}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -256,16 +316,25 @@ export default function App() {
         </div>
       )}
 
-      {/* Cambio entre Modo Programación y Modo Remoto */}
+      {/* --- SELECTOR DE MODO (PROGRAMACIÓN / REMOTO) --- */}
       <div className="mode-selector">
-        <button onClick={() => setMode("program")} disabled={isExecuting}>
+        <button 
+          className={mode === "program" ? "active" : ""}
+          onClick={() => setMode("program")} 
+          disabled={isExecuting}
+        >
           🧩 Programación
         </button>
-        <button onClick={() => setMode("remote")} disabled={isExecuting}>
+        <button 
+          className={mode === "remote" ? "active" : ""}
+          onClick={() => setMode("remote")} 
+          disabled={isExecuting}
+        >
           🎮 Remoto
         </button>
       </div>
 
+      {/* --- INTERFAZ SEGÚN MODO SELECCIONADO --- */}
       {mode === "program" ? (
         <>
           <h2>🧩 Modo Programación</h2>
@@ -316,7 +385,7 @@ export default function App() {
             </div>
             <button onClick={() => handleRemoteMove("DOWN")}>⬇️</button>
           </div>
-          <button className="reset-btn" onClick={resetGame}>
+          <button className="reset-btn" onClick={resetGame} style={{ marginTop: "15px" }}>
             🔄 Reiniciar Tablero
           </button>
         </>
