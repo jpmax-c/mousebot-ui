@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 const SIZE = 5;
+// Conexión fija y automática vía mDNS por WebSockets
+const WS_URL = "ws://mousebot.local:81";
 
 export default function App() {
   const [mode, setMode] = useState("program");
   const [editTool, setEditTool] = useState("wall");
 
-  // Dirección IP o mDNS por defecto del ESP32
-  const [robotIp, setRobotIp] = useState("192.168.100.94");
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
 
@@ -21,57 +21,46 @@ export default function App() {
   const [walls, setWalls] = useState([]);
   const [message, setMessage] = useState("");
 
-  // ---------------- CONEXIÓN WEBSOCKET ----------------
-  const connectWebSocket = (targetIp) => {
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
-
-    // Formatear dirección limpia sin http:// ni slashes
-    const cleanIp = targetIp.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    const wsUrl = `ws://${cleanIp}:81`;
-
-    console.log("Intentando conectar a:", wsUrl);
-    const socket = new WebSocket(wsUrl);
-    socketRef.current = socket;
-
-    socket.onopen = () => {
-      console.log("¡Conectado exitosamente por WebSocket!");
-      setIsConnected(true);
-    };
-
-    socket.onclose = () => {
-      console.log("WebSocket desconectado");
-      setIsConnected(false);
-    };
-
-    socket.onerror = (err) => {
-      console.error("Error en WebSocket:", err);
-      setIsConnected(false);
-    };
-  };
-
+  // ---------------- CONEXIÓN AUTOMÁTICA WEBSOCKET ----------------
   useEffect(() => {
-    connectWebSocket(robotIp);
+    let socket;
+
+    const connect = () => {
+      socket = new WebSocket(WS_URL);
+      socketRef.current = socket;
+
+      socket.onopen = () => {
+        console.log("¡Conectado a MouseBot!");
+        setIsConnected(true);
+      };
+
+      socket.onclose = () => {
+        setIsConnected(false);
+        // Intenta reconectar automáticamente cada 3 segundos si se cae la red
+        setTimeout(connect, 3000);
+      };
+
+      socket.onerror = (err) => {
+        console.error("Error WebSocket:", err);
+        socket.close();
+      };
+    };
+
+    connect();
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
+      if (socket) socket.close();
     };
   }, []);
 
-  // Función para enviar órdenes en tiempo real por WebSocket
+  // Enviar comando a la ESP32
   const sendToESP32 = (cmd) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(cmd);
-      console.log("Enviado a ESP32:", cmd);
-    } else {
-      console.warn("WebSocket no está listo para enviar:", cmd);
     }
   };
 
-  // ---------------- LÓGICA DEL TABLERO Y JUEGO ----------------
+  // ---------------- LÓGICA DEL JUEGO ----------------
   const isWall = (r, c) => walls.some((w) => w.row === r && w.col === c);
 
   const isValidMove = (r, c) => {
@@ -157,7 +146,6 @@ export default function App() {
     return currentMouse;
   };
 
-  // MODO PROGRAMACIÓN: Sincronización Paso a Paso con los motores
   const executeRoute = async () => {
     if (isExecuting || route.length === 0) return;
     setIsExecuting(true);
@@ -167,8 +155,6 @@ export default function App() {
 
     for (let i = 0; i < route.length; i++) {
       const cmd = route[i];
-
-      // Envío de la orden al robot
       sendToESP32(cmd);
 
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -180,7 +166,6 @@ export default function App() {
     setIsExecuting(false);
   };
 
-  // MODO REMOTO: Movimiento Instantáneo
   const handleRemoteMove = (cmd) => {
     setMouse((prev) => moveMouseStep(cmd, prev));
     sendToESP32(cmd);
@@ -244,41 +229,11 @@ export default function App() {
         <h3>Perseguidor de Queso</h3>
       </header>
 
-      {/* --- BARRA SUPERIOR CON ESTADO Y CONTROL DE IP --- */}
-      <div className="top-controls" style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "center", marginBottom: "15px" }}>
+      {/* --- BARRA SUPERIOR LIMPIA Y SIN CAMPOS DE IP --- */}
+      <div className="top-controls">
         <div className={`wifi-status ${isConnected ? "online" : "offline"}`}>
-          {isConnected ? "🟢 WebSocket Listo" : "🔴 ESP32 Buscando..."}
+          {isConnected ? "🟢 MouseBot Conectado" : "🔴 ESP32 Buscando..."}
         </div>
-
-        <input
-          type="text"
-          value={robotIp}
-          onChange={(e) => setRobotIp(e.target.value)}
-          placeholder="IP o mousebot.local"
-          style={{
-            padding: "5px 8px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-            fontSize: "0.85rem",
-            width: "150px",
-            textAlign: "center"
-          }}
-        />
-
-        <button
-          onClick={() => connectWebSocket(robotIp)}
-          style={{
-            padding: "5px 10px",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: "#4A90E2",
-            color: "#fff",
-            cursor: "pointer",
-            fontSize: "0.85rem"
-          }}
-        >
-          Reconectar
-        </button>
 
         <div className="edit-tools-dropdown">
           <label htmlFor="tool-select">Herramienta: </label>
@@ -316,7 +271,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- SELECTOR DE MODO (PROGRAMACIÓN / REMOTO) --- */}
+      {/* --- SELECTOR DE MODO --- */}
       <div className="mode-selector">
         <button 
           className={mode === "program" ? "active" : ""}
@@ -334,7 +289,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* --- INTERFAZ SEGÚN MODO SELECCIONADO --- */}
+      {/* --- MODO PROGRAMACIÓN / REMOTO --- */}
       {mode === "program" ? (
         <>
           <h2>🧩 Modo Programación</h2>
